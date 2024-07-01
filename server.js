@@ -88,6 +88,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
   }
 
   wss.handleUpgrade(request, socket, head, function (ws) {
+    console.error('[DEBUG] wss.handleUpgrade: emit connection');
     wss.emit("connection", ws, request);
   });
 });
