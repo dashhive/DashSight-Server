@@ -68,9 +68,12 @@ DashSightServer.create = function ({ rpc, wss, authenticate }) {
     res.json(response);
   };
 
+  dss._socketId = 0;
   dss.sockets = {};
   dss.sockets.onconnection = async function (ws, request) {
-    console.error("[DEBUG] dss.sockets.onconnection");
+    dss._socketId += 1;
+    let sid = dss._socketId;
+    console.error(`[DEBUG] [${sid}] dss.sockets.onconnection`);
     ws.on("error", console.error);
 
     // TODO session should establish which hostname and port
@@ -97,7 +100,7 @@ DashSightServer.create = function ({ rpc, wss, authenticate }) {
       return;
     }
 
-    console.log(`[DEBUG] ws query:`);
+    console.log(`[DEBUG] [${sid}] ws query:`);
     console.log(query);
     let stream = WebSocket.createWebSocketStream(ws, { encoding: null });
     let conn = Net.createConnection({
@@ -110,15 +113,15 @@ DashSightServer.create = function ({ rpc, wss, authenticate }) {
     stream.pipe(conn);
     conn.pipe(stream);
     ws.on("open", function (chunk) {
-      console.log("[DEBUG] ws.on open");
+      console.log(`[DEBUG] [${sid}] ws.on open`);
     });
     ws.on("message", function (chunk) {
       let hex = chunk.toString("hex");
-      console.log("[DEBUG] ws.on data hex", hex);
+      console.log(`[DEBUG] [${sid}] ws.on data hex`, hex);
     });
     conn.on("data", function (chunk) {
       let hex = chunk.toString("hex");
-      console.log("[DEBUG] conn.on data hex", hex);
+      console.log(`[DEBUG] [${sid}] conn.on data hex`, hex);
       // ws.send(chunk);
     });
 
@@ -126,12 +129,12 @@ DashSightServer.create = function ({ rpc, wss, authenticate }) {
     stream.once("end", disconnect);
     stream.once("close", disconnect);
     function disconnect() {
-      console.log("[DEBUG] ws stream pipe disconnected");
+      console.log(`[DEBUG] [${sid}] ws stream pipe disconnected`);
       conn.end();
       conn.destroy();
     }
 
-    console.log("[DEBUG] piped each end and added handlers");
+    console.log(`[DEBUG] [${sid}] piped each end and added handlers`);
   };
 
   dss.router = new AsyncRouter.Router();
